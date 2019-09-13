@@ -26,19 +26,7 @@ const std::vector<float> vertexPositions = {
 
 GLuint positionBufferObject;
 GLuint vao;
-GLuint offsetLocation;
-
-void computePositionOffsets(float &fXOffset, float &fYOffset) {
-  const float fLoopDuration = 5.0f;
-  const float fScale = 3.14159f * 2.0f / fLoopDuration;
-
-  float fElapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-
-  float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
-
-  fXOffset = cosf(fCurrTimeThroughLoop * fScale) * 0.5f;
-  fYOffset = sinf(fCurrTimeThroughLoop * fScale) * 0.5f;
-}
+GLuint loopTime;
 
 void InitializeProgram() {
   std::vector<GLuint> shaderList;
@@ -48,9 +36,11 @@ void InitializeProgram() {
 
   theProgram = utils::createProgram(shaderList);
 
-  offsetLocation = glGetUniformLocation(theProgram, "offset");
-
-  std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
+  loopTime = glGetUniformLocation(theProgram, "loopTime");
+  GLuint loopDuration = glGetUniformLocation(theProgram, "loopDuration");
+  glUseProgram(theProgram);
+  glUniform1f(loopDuration, 5.0f);
+  glUseProgram(0);
 }
 
 
@@ -75,15 +65,12 @@ void init() {
 //You should call glutSwapBuffers after all of your rendering to display what you rendered.
 //If you need continuous updates of the screen, call glutPostRedisplay() at the end of the function.
 void display() {
-  float fXOffset = 0.0f, fYOffset = 0.0f;
-  computePositionOffsets(fXOffset, fYOffset);
-
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
   glUseProgram(theProgram);
 
-  glUniform2f(offsetLocation, fXOffset, fYOffset);
+  glUniform1f(loopTime, glutGet(GLUT_ELAPSED_TIME) / 1000.0f);
 
   glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
   glEnableVertexAttribArray(0);
@@ -95,7 +82,6 @@ void display() {
 
   glDisableVertexAttribArray(0);
   glUseProgram(0);
-
   glutSwapBuffers();
   glutPostRedisplay();
 }
