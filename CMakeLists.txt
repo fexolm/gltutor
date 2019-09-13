@@ -3,4 +3,10 @@ project(gltest)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_subdirectory(tutor1)
+find_package(GLUT REQUIRED)
+
+add_library(utils common/utils.cpp)
+
+target_link_libraries(utils OpenGL GLEW ${GLUT_LIBRARIES} X11)
+
+add_subdirectory(triangle)
