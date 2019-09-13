@@ -37,9 +37,13 @@ void InitializeProgram() {
   theProgram = utils::createProgram(shaderList);
 
   loopTime = glGetUniformLocation(theProgram, "loopTime");
+
   GLuint loopDuration = glGetUniformLocation(theProgram, "loopDuration");
+  GLuint fragLoopDuration = glGetUniformLocation(theProgram, "fragLoopDuration");
+
   glUseProgram(theProgram);
   glUniform1f(loopDuration, 5.0f);
+  glUniform1f(fragLoopDuration, 10.0f);
   glUseProgram(0);
 }
 
