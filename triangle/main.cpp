@@ -26,6 +26,7 @@ const std::vector<float> vertexPositions = {
 
 GLuint positionBufferObject;
 GLuint vao;
+GLuint offsetLocation;
 
 void computePositionOffsets(float &fXOffset, float &fYOffset) {
   const float fLoopDuration = 5.0f;
@@ -39,19 +40,6 @@ void computePositionOffsets(float &fXOffset, float &fYOffset) {
   fYOffset = sinf(fCurrTimeThroughLoop * fScale) * 0.5f;
 }
 
-void adjustVertexData(float fXOffset, float fYOffset) {
-  std::vector<float> fNewData(vertexPositions);
-
-  for(int v = 0; v < fNewData.size(); v++) {
-    fNewData[v] += fXOffset;
-    fNewData[v + 1] += fYOffset;
-  }
-
-  glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
-  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertexPositions), fNewData.data());
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
 void InitializeProgram() {
   std::vector<GLuint> shaderList;
 
@@ -59,6 +47,8 @@ void InitializeProgram() {
   shaderList.push_back(utils::loadShader(GL_FRAGMENT_SHADER, "shaders/fragmentShader.glsl"));
 
   theProgram = utils::createProgram(shaderList);
+
+  offsetLocation = glGetUniformLocation(theProgram, "offset");
 
   std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
 }
@@ -87,12 +77,13 @@ void init() {
 void display() {
   float fXOffset = 0.0f, fYOffset = 0.0f;
   computePositionOffsets(fXOffset, fYOffset);
-  adjustVertexData(fXOffset, fYOffset);
 
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
   glUseProgram(theProgram);
+
+  glUniform2f(offsetLocation, fXOffset, fYOffset);
 
   glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
   glEnableVertexAttribArray(0);
