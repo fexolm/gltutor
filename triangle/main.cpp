@@ -15,6 +15,43 @@ void init();
 
 GLuint theProgram;
 
+const std::vector<float> vertexPositions = {
+    0.0f,    0.5f, 0.0f, 1.0f,
+    0.5f, -0.366f, 0.0f, 1.0f,
+    -0.5f, -0.366f, 0.0f, 1.0f,
+    1.0f,    0.0f, 0.0f, 1.0f,
+    0.0f,    1.0f, 0.0f, 1.0f,
+    0.0f,    0.0f, 1.0f, 1.0f,
+};
+
+GLuint positionBufferObject;
+GLuint vao;
+
+void computePositionOffsets(float &fXOffset, float &fYOffset) {
+  const float fLoopDuration = 5.0f;
+  const float fScale = 3.14159f * 2.0f / fLoopDuration;
+
+  float fElapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+
+  float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
+
+  fXOffset = cosf(fCurrTimeThroughLoop * fScale) * 0.5f;
+  fYOffset = sinf(fCurrTimeThroughLoop * fScale) * 0.5f;
+}
+
+void adjustVertexData(float fXOffset, float fYOffset) {
+  std::vector<float> fNewData(vertexPositions);
+
+  for(int v = 0; v < fNewData.size(); v++) {
+    fNewData[v] += fXOffset;
+    fNewData[v + 1] += fYOffset;
+  }
+
+  glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
+  glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertexPositions), fNewData.data());
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
 void InitializeProgram() {
   std::vector<GLuint> shaderList;
 
@@ -26,22 +63,12 @@ void InitializeProgram() {
   std::for_each(shaderList.begin(), shaderList.end(), glDeleteShader);
 }
 
-GLuint positionBufferObject;
-GLuint vao;
 
 void InitializeVertexBuffer() {
-  const float vertexPositions[] = {
-      0.0f,    0.5f, 0.0f, 1.0f,
-      0.5f, -0.366f, 0.0f, 1.0f,
-      -0.5f, -0.366f, 0.0f, 1.0f,
-      1.0f,    0.0f, 0.0f, 1.0f,
-      0.0f,    1.0f, 0.0f, 1.0f,
-      0.0f,    0.0f, 1.0f, 1.0f,
-  };
   glGenBuffers(1, &positionBufferObject);
 
   glBindBuffer(GL_ARRAY_BUFFER, positionBufferObject);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPositions), vertexPositions, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexPositions.size(), vertexPositions.data(), GL_STREAM_DRAW);
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
@@ -58,6 +85,10 @@ void init() {
 //You should call glutSwapBuffers after all of your rendering to display what you rendered.
 //If you need continuous updates of the screen, call glutPostRedisplay() at the end of the function.
 void display() {
+  float fXOffset = 0.0f, fYOffset = 0.0f;
+  computePositionOffsets(fXOffset, fYOffset);
+  adjustVertexData(fXOffset, fYOffset);
+
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
@@ -75,6 +106,7 @@ void display() {
   glUseProgram(0);
 
   glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 //Called whenever the window is resized. The new window size is given, in pixels.
