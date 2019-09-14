@@ -1,3 +1,4 @@
+#include <cstring>
 #include "utils.h"
 
 unsigned int defaults(unsigned int displayMode, int &width, int &height);
@@ -11,9 +12,10 @@ GLuint positionBufferObject;
 GLuint vao;
 GLuint loopTime;
 GLuint offsetUniform;
-GLuint frustumScaleUniform;
-GLuint zNearUniform;
-GLuint zFarUniform;
+GLuint perspectiveMatrixUniform;
+
+float perspectiveMatrix[16];
+float frustumScale;
 
 const std::vector<float> vertexPositions = {
     0.25f,  0.25f, -1.25f, 1.0f,
@@ -126,14 +128,21 @@ void InitializeProgram() {
 
   offsetUniform = glGetUniformLocation(theProgram, "offset");
 
-  frustumScaleUniform = glGetUniformLocation(theProgram, "frustumScale");
-  zNearUniform = glGetUniformLocation(theProgram, "zNear");
-  zFarUniform = glGetUniformLocation(theProgram, "zFar");
+  perspectiveMatrixUniform = glGetUniformLocation(theProgram, "perspectiveMatrix");
+
+  frustumScale = 1.0f;
+  float zNear = 0.5f;
+  float zFar = 3.0f;
+  memset(perspectiveMatrix, 0, sizeof(float) * 16);
+
+  perspectiveMatrix[0] = frustumScale;
+  perspectiveMatrix[5] = frustumScale;
+  perspectiveMatrix[10] = (zFar + zNear) / (zNear - zFar);
+  perspectiveMatrix[14] = (2 * zFar * zNear) / (zNear - zFar);
+  perspectiveMatrix[11] = -1.0f;
 
   glUseProgram(theProgram);
-  glUniform1f(frustumScaleUniform, 1.0f);
-  glUniform1f(zNearUniform, 1.0f);
-  glUniform1f(zFarUniform, 3.0f);
+  glUniformMatrix4fv(perspectiveMatrixUniform, 1, GL_FALSE, perspectiveMatrix);
   glUseProgram(0);
 }
 
@@ -158,6 +167,12 @@ void init() {
 }
 
 void reshape(int w, int h) {
+  perspectiveMatrix[0] = frustumScale / ((float)w/ (float)h);
+  perspectiveMatrix[5] = frustumScale;
+
+  glUseProgram(theProgram);
+  glUniformMatrix4fv(perspectiveMatrixUniform, 1, GL_FALSE, perspectiveMatrix);
+  glUseProgram(0);
   glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 }
 
