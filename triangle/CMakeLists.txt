@@ -1,6 +1,12 @@
-project(tutor1)
+project(triangle)
 
-add_executable(tutor1 main.cpp)
-target_link_libraries(tutor1 OpenGL GLEW ${GLUT_LIBRARIES} X11 utils stdc++fs)
+add_executable(triangle main.cpp)
+target_link_libraries(triangle OpenGL GLEW ${GLUT_LIBRARIES} X11 utils stdc++fs)
 
-file(COPY shaders DESTINATION ${CMAKE_BINARY_DIR}/triangle)
+include(common)
+
+COPY_SHADERS(triangle)
+
+
+
+

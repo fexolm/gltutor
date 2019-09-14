@@ -1,19 +1,13 @@
-#include "../common/utils.h"
+#include "utils.h"
 
 #include <algorithm>
 #include <cmath>
 
 unsigned int defaults(unsigned int displayMode, int &width, int &height);
-
 void keyboard(unsigned char key, int x, int y);
-
 void reshape(int w, int h);
-
 void display();
-
 void init();
-
-GLuint theProgram;
 
 const std::vector<float> vertexPositions = {
     0.0f,    0.5f, 0.0f, 1.0f,
@@ -24,6 +18,7 @@ const std::vector<float> vertexPositions = {
     0.0f,    0.0f, 1.0f, 1.0f,
 };
 
+GLuint theProgram;
 GLuint positionBufferObject;
 GLuint vao;
 GLuint loopTime;

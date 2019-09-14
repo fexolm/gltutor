@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 3.14)
 project(gltest)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 find_package(GLUT REQUIRED)
 
-add_library(utils common/utils.cpp)
+include_directories(common)
 
-target_link_libraries(utils OpenGL GLEW ${GLUT_LIBRARIES} X11)
-
+add_subdirectory(common)
 add_subdirectory(triangle)
