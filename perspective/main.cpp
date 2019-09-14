@@ -11,55 +11,61 @@ GLuint positionBufferObject;
 GLuint vao;
 GLuint loopTime;
 GLuint offsetUniform;
+GLuint frustumScaleUniform;
+GLuint zNearUniform;
+GLuint zFarUniform;
 
 const std::vector<float> vertexPositions = {
-    0.25f, 0.25f, 0.75f, 1.0f,
-    0.25f, -0.25f, 0.75f, 1.0f,
-    -0.25f, 0.25f, 0.75f, 1.0f,
+    0.25f,  0.25f, -1.25f, 1.0f,
+    0.25f, -0.25f, -1.25f, 1.0f,
+    -0.25f,  0.25f, -1.25f, 1.0f,
 
-    0.25f, -0.25f, 0.75f, 1.0f,
-    -0.25f, -0.25f, 0.75f, 1.0f,
-    -0.25f, 0.25f, 0.75f, 1.0f,
+    0.25f, -0.25f, -1.25f, 1.0f,
+    -0.25f, -0.25f, -1.25f, 1.0f,
+    -0.25f,  0.25f, -1.25f, 1.0f,
 
-    0.25f, 0.25f, -0.75f, 1.0f,
-    -0.25f, 0.25f, -0.75f, 1.0f,
-    0.25f, -0.25f, -0.75f, 1.0f,
+    0.25f,  0.25f, -2.75f, 1.0f,
+    -0.25f,  0.25f, -2.75f, 1.0f,
+    0.25f, -0.25f, -2.75f, 1.0f,
 
-    0.25f, -0.25f, -0.75f, 1.0f,
-    -0.25f, 0.25f, -0.75f, 1.0f,
-    -0.25f, -0.25f, -0.75f, 1.0f,
+    0.25f, -0.25f, -2.75f, 1.0f,
+    -0.25f,  0.25f, -2.75f, 1.0f,
+    -0.25f, -0.25f, -2.75f, 1.0f,
 
-    -0.25f, 0.25f, 0.75f, 1.0f,
-    -0.25f, -0.25f, 0.75f, 1.0f,
-    -0.25f, -0.25f, -0.75f, 1.0f,
+    -0.25f,  0.25f, -1.25f, 1.0f,
+    -0.25f, -0.25f, -1.25f, 1.0f,
+    -0.25f, -0.25f, -2.75f, 1.0f,
 
-    -0.25f, 0.25f, 0.75f, 1.0f,
-    -0.25f, -0.25f, -0.75f, 1.0f,
-    -0.25f, 0.25f, -0.75f, 1.0f,
+    -0.25f,  0.25f, -1.25f, 1.0f,
+    -0.25f, -0.25f, -2.75f, 1.0f,
+    -0.25f,  0.25f, -2.75f, 1.0f,
 
-    0.25f, 0.25f, 0.75f, 1.0f,
-    0.25f, -0.25f, -0.75f, 1.0f,
-    0.25f, -0.25f, 0.75f, 1.0f,
+    0.25f,  0.25f, -1.25f, 1.0f,
+    0.25f, -0.25f, -2.75f, 1.0f,
+    0.25f, -0.25f, -1.25f, 1.0f,
 
-    0.25f, 0.25f, 0.75f, 1.0f,
-    0.25f, 0.25f, -0.75f, 1.0f,
-    0.25f, -0.25f, -0.75f, 1.0f,
+    0.25f,  0.25f, -1.25f, 1.0f,
+    0.25f,  0.25f, -2.75f, 1.0f,
+    0.25f, -0.25f, -2.75f, 1.0f,
 
-    0.25f, 0.25f, -0.75f, 1.0f,
-    0.25f, 0.25f, 0.75f, 1.0f,
-    -0.25f, 0.25f, 0.75f, 1.0f,
+    0.25f,  0.25f, -2.75f, 1.0f,
+    0.25f,  0.25f, -1.25f, 1.0f,
+    -0.25f,  0.25f, -1.25f, 1.0f,
 
-    0.25f, 0.25f, -0.75f, 1.0f,
-    -0.25f, 0.25f, 0.75f, 1.0f,
-    -0.25f, 0.25f, -0.75f, 1.0f,
+    0.25f,  0.25f, -2.75f, 1.0f,
+    -0.25f,  0.25f, -1.25f, 1.0f,
+    -0.25f,  0.25f, -2.75f, 1.0f,
 
-    0.25f, -0.25f, -0.75f, 1.0f,
-    -0.25f, -0.25f, 0.75f, 1.0f,
-    0.25f, -0.25f, 0.75f, 1.0f,
+    0.25f, -0.25f, -2.75f, 1.0f,
+    -0.25f, -0.25f, -1.25f, 1.0f,
+    0.25f, -0.25f, -1.25f, 1.0f,
 
-    0.25f, -0.25f, -0.75f, 1.0f,
-    -0.25f, -0.25f, -0.75f, 1.0f,
-    -0.25f, -0.25f, 0.75f, 1.0f,
+    0.25f, -0.25f, -2.75f, 1.0f,
+    -0.25f, -0.25f, -2.75f, 1.0f,
+    -0.25f, -0.25f, -1.25f, 1.0f,
+
+
+
 
     0.0f, 0.0f, 1.0f, 1.0f,
     0.0f, 0.0f, 1.0f, 1.0f,
@@ -119,6 +125,16 @@ void InitializeProgram() {
   theProgram = utils::createProgram(shaderList);
 
   offsetUniform = glGetUniformLocation(theProgram, "offset");
+
+  frustumScaleUniform = glGetUniformLocation(theProgram, "frustumScale");
+  zNearUniform = glGetUniformLocation(theProgram, "zNear");
+  zFarUniform = glGetUniformLocation(theProgram, "zFar");
+
+  glUseProgram(theProgram);
+  glUniform1f(frustumScaleUniform, 1.0f);
+  glUniform1f(zNearUniform, 1.0f);
+  glUniform1f(zFarUniform, 3.0f);
+  glUseProgram(0);
 }
 
 void InitializeVertexBuffer() {
@@ -151,7 +167,7 @@ void display() {
 
   glUseProgram(theProgram);
 
-  glUniform2f(offsetUniform, 0.5f, 0.25f);
+  glUniform2f(offsetUniform, 0.5f, 0.5f);
 
   size_t colorData = vertexPositions.size() * sizeof(float) / 2;
 
