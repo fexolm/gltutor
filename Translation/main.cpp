@@ -61,50 +61,103 @@ GLuint cameraToClipMatrixUnif;
 
 glm::mat4 cameraToClipMatrix(0.0f);
 
-glm::vec3 StationaryOffset(float fElapsedTime) {
-  return glm::vec3(0.0f, 0.0f, -20.0f);
+glm::mat3 NullRotation(float fElapsedTime)
+{
+  return glm::mat3(1.0f);
 }
 
-glm::vec3 OvalOffset(float fElapsedTime) {
-  const float fLoopDuration = 3.0f;
+float ComputeAngleRad(float fElapsedTime, float fLoopDuration)
+{
   const float fScale = 3.14159f * 2.0f / fLoopDuration;
-
   float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
-
-  return glm::vec3(cosf(fCurrTimeThroughLoop * fScale) * 4.f,
-                   sinf(fCurrTimeThroughLoop * fScale) * 6.f,
-                   -20.0f);
+  return fCurrTimeThroughLoop * fScale;
 }
 
-glm::vec3 BottomCircleOffset(float fElapsedTime) {
-  const float fLoopDuration = 12.0f;
-  const float fScale = 3.14159f * 2.0f / fLoopDuration;
+glm::mat3 RotateX(float fElapsedTime)
+{
+  float fAngRad = ComputeAngleRad(fElapsedTime, 3.0);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
 
-  float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
-
-  return glm::vec3(cosf(fCurrTimeThroughLoop * fScale) * 5.f,
-                   -3.5f,
-                   sinf(fCurrTimeThroughLoop * fScale) * 5.f - 20.0f);
+  glm::mat3 theMat(1.0f);
+  theMat[1].y = fCos; theMat[2].y = -fSin;
+  theMat[1].z = fSin; theMat[2].z = fCos;
+  return theMat;
 }
 
-struct Instance {
-  typedef glm::vec3(*OffsetFunc)(float);
+glm::mat3 RotateY(float fElapsedTime)
+{
+  float fAngRad = ComputeAngleRad(fElapsedTime, 2.0);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
 
-  OffsetFunc CalcOffset;
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = fCos; theMat[2].x = fSin;
+  theMat[0].z = -fSin; theMat[2].z = fCos;
+  return theMat;
+}
 
-  glm::mat4 ConstructMatrix(float fElapsedTime) {
-    glm::mat4 theMat(1.0f);
+glm::mat3 RotateZ(float fElapsedTime)
+{
+  float fAngRad = ComputeAngleRad(fElapsedTime, 2.0);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
 
-    theMat[3] = glm::vec4(CalcOffset(fElapsedTime), 1.0f);
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = fCos; theMat[1].x = -fSin;
+  theMat[0].y = fSin; theMat[1].y = fCos;
+  return theMat;
+}
+
+glm::mat3 RotateAxis(float fElapsedTime)
+{
+  float fAngRad = ComputeAngleRad(fElapsedTime, 2.0);
+  float fCos = cosf(fAngRad);
+  float fInvCos = 1.0f - fCos;
+  float fSin = sinf(fAngRad);
+  float fInvSin = 1.0f - fSin;
+
+  glm::vec3 axis(1.0f, 1.0f, 1.0f);
+  axis = glm::normalize(axis);
+
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = (axis.x * axis.x) + ((1 - axis.x * axis.x) * fCos);
+  theMat[1].x = axis.x * axis.y * (fInvCos) - (axis.z * fSin);
+  theMat[2].x = axis.x * axis.z * (fInvCos) + (axis.y * fSin);
+
+  theMat[0].y = axis.x * axis.y * (fInvCos) + (axis.z * fSin);
+  theMat[1].y = (axis.y * axis.y) + ((1 - axis.y * axis.y) * fCos);
+  theMat[2].y = axis.y * axis.z * (fInvCos) - (axis.x * fSin);
+
+  theMat[0].z = axis.x * axis.z * (fInvCos) - (axis.y * fSin);
+  theMat[1].z = axis.y * axis.z * (fInvCos) + (axis.x * fSin);
+  theMat[2].z = (axis.z * axis.z) + ((1 - axis.z * axis.z) * fCos);
+  return theMat;
+}
+
+struct Instance
+{
+  typedef glm::mat3(*RotationFunc)(float);
+
+  RotationFunc CalcRotation;
+  glm::vec3 offset;
+
+  glm::mat4 ConstructMatrix(float fElapsedTime)
+  {
+    const glm::mat3 &rotMatrix = CalcRotation(fElapsedTime);
+    glm::mat4 theMat(rotMatrix);
+    theMat[3] = glm::vec4(offset, 1.0f);
 
     return theMat;
   }
 };
 
 Instance g_instanceList[] = {
-    {StationaryOffset},
-    {OvalOffset},
-    {BottomCircleOffset},
+    {NullRotation, glm::vec3(0.0f, 0.0f, -25.0f)},
+    {RotateX, glm::vec3(-5.0f, -5.0f, -25.0f)},
+    {RotateY, glm::vec3(-5.0f, 5.0f, -25.0f)},
+    {RotateZ, glm::vec3(5.0f, 5.0f, -25.0f)},
+    {RotateAxis, glm::vec3(5.0f, -5.0f, -25.0f)},
 };
 
 float CalcFrustumScale(float fFovDeg) {
