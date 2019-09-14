@@ -1,5 +1,6 @@
-#include <cstring>
 #include "utils.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 unsigned int defaults(unsigned int displayMode, int &width, int &height);
 void keyboard(unsigned char key, int x, int y);
@@ -7,149 +8,112 @@ void reshape(int w, int h);
 void display();
 void init();
 
-const int numberOfVertices = 36;
+const int numberOfVertices = 8;
 
-#define RIGHT_EXTENT 0.8f
-#define LEFT_EXTENT -RIGHT_EXTENT
-#define TOP_EXTENT 0.20f
-#define MIDDLE_EXTENT 0.0f
-#define BOTTOM_EXTENT -TOP_EXTENT
-#define FRONT_EXTENT -1.25f
-#define REAR_EXTENT -1.75f
-
-#define GREEN_COLOR 0.75f, 0.75f, 1.0f, 1.0f
-#define BLUE_COLOR    0.0f, 0.5f, 0.0f, 1.0f
+#define GREEN_COLOR 0.0f, 1.0f, 0.0f, 1.0f
+#define BLUE_COLOR    0.0f, 0.0f, 1.0f, 1.0f
 #define RED_COLOR 1.0f, 0.0f, 0.0f, 1.0f
 #define GREY_COLOR 0.8f, 0.8f, 0.8f, 1.0f
 #define BROWN_COLOR 0.5f, 0.5f, 0.0f, 1.0f
 
 const float vertexData[] = {
-    //Object 1 positions
-    LEFT_EXTENT, TOP_EXTENT, REAR_EXTENT,
-    LEFT_EXTENT, MIDDLE_EXTENT, FRONT_EXTENT,
-    RIGHT_EXTENT, MIDDLE_EXTENT, FRONT_EXTENT,
-    RIGHT_EXTENT, TOP_EXTENT, REAR_EXTENT,
+    +1.0f, +1.0f, +1.0f,
+    -1.0f, -1.0f, +1.0f,
+    -1.0f, +1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
 
-    LEFT_EXTENT, BOTTOM_EXTENT, REAR_EXTENT,
-    LEFT_EXTENT, MIDDLE_EXTENT, FRONT_EXTENT,
-    RIGHT_EXTENT, MIDDLE_EXTENT, FRONT_EXTENT,
-    RIGHT_EXTENT, BOTTOM_EXTENT, REAR_EXTENT,
-
-    LEFT_EXTENT, TOP_EXTENT, REAR_EXTENT,
-    LEFT_EXTENT, MIDDLE_EXTENT, FRONT_EXTENT,
-    LEFT_EXTENT, BOTTOM_EXTENT, REAR_EXTENT,
-
-    RIGHT_EXTENT, TOP_EXTENT, REAR_EXTENT,
-    RIGHT_EXTENT, MIDDLE_EXTENT, FRONT_EXTENT,
-    RIGHT_EXTENT, BOTTOM_EXTENT, REAR_EXTENT,
-
-    LEFT_EXTENT, BOTTOM_EXTENT, REAR_EXTENT,
-    LEFT_EXTENT, TOP_EXTENT, REAR_EXTENT,
-    RIGHT_EXTENT, TOP_EXTENT, REAR_EXTENT,
-    RIGHT_EXTENT, BOTTOM_EXTENT, REAR_EXTENT,
-
-//	0, 2, 1,
-//	3, 2, 0,
-
-    //Object 2 positions
-    TOP_EXTENT, RIGHT_EXTENT, REAR_EXTENT,
-    MIDDLE_EXTENT, RIGHT_EXTENT, FRONT_EXTENT,
-    MIDDLE_EXTENT, LEFT_EXTENT, FRONT_EXTENT,
-    TOP_EXTENT, LEFT_EXTENT, REAR_EXTENT,
-
-    BOTTOM_EXTENT, RIGHT_EXTENT, REAR_EXTENT,
-    MIDDLE_EXTENT, RIGHT_EXTENT, FRONT_EXTENT,
-    MIDDLE_EXTENT, LEFT_EXTENT, FRONT_EXTENT,
-    BOTTOM_EXTENT, LEFT_EXTENT, REAR_EXTENT,
-
-    TOP_EXTENT, RIGHT_EXTENT, REAR_EXTENT,
-    MIDDLE_EXTENT, RIGHT_EXTENT, FRONT_EXTENT,
-    BOTTOM_EXTENT, RIGHT_EXTENT, REAR_EXTENT,
-
-    TOP_EXTENT, LEFT_EXTENT, REAR_EXTENT,
-    MIDDLE_EXTENT, LEFT_EXTENT, FRONT_EXTENT,
-    BOTTOM_EXTENT, LEFT_EXTENT, REAR_EXTENT,
-
-    BOTTOM_EXTENT, RIGHT_EXTENT, REAR_EXTENT,
-    TOP_EXTENT, RIGHT_EXTENT, REAR_EXTENT,
-    TOP_EXTENT, LEFT_EXTENT, REAR_EXTENT,
-    BOTTOM_EXTENT, LEFT_EXTENT, REAR_EXTENT,
-
-    //Object 1 colors
-    GREEN_COLOR,
-    GREEN_COLOR,
-    GREEN_COLOR,
-    GREEN_COLOR,
-
-    BLUE_COLOR,
-    BLUE_COLOR,
-    BLUE_COLOR,
-    BLUE_COLOR,
-
-    RED_COLOR,
-    RED_COLOR,
-    RED_COLOR,
-
-    GREY_COLOR,
-    GREY_COLOR,
-    GREY_COLOR,
-
-    BROWN_COLOR,
-    BROWN_COLOR,
-    BROWN_COLOR,
-    BROWN_COLOR,
-
-    //Object 2 colors
-    RED_COLOR,
-    RED_COLOR,
-    RED_COLOR,
-    RED_COLOR,
-
-    BROWN_COLOR,
-    BROWN_COLOR,
-    BROWN_COLOR,
-    BROWN_COLOR,
-
-    BLUE_COLOR,
-    BLUE_COLOR,
-    BLUE_COLOR,
+    -1.0f, -1.0f, -1.0f,
+    +1.0f, +1.0f, -1.0f,
+    +1.0f, -1.0f, +1.0f,
+    -1.0f, +1.0f, +1.0f,
 
     GREEN_COLOR,
-    GREEN_COLOR,
-    GREEN_COLOR,
+    BLUE_COLOR,
+    RED_COLOR,
+    BROWN_COLOR,
 
-    GREY_COLOR,
-    GREY_COLOR,
-    GREY_COLOR,
-    GREY_COLOR,
+    GREEN_COLOR,
+    BLUE_COLOR,
+    RED_COLOR,
+    BROWN_COLOR,
 };
 
 const GLshort indexData[] = {
-    0, 2, 1,
-    3, 2, 0,
+    0, 1, 2,
+    1, 0, 3,
+    2, 3, 0,
+    3, 2, 1,
 
-    4, 5, 6,
-    6, 7, 4,
-
-    8, 9, 10,
-    11, 13, 12,
-
-    14, 16, 15,
-    17, 16, 14,
+    5, 4, 6,
+    4, 5, 7,
+    7, 6, 4,
+    6, 7, 5,
 };
-
-GLuint theProgram;
-
-GLuint offsetUniform;
-GLuint perspectiveMatrixUnif;
-
-float perspectiveMatrix[16];
-const float fFrustumScale = 1.0f;
 
 GLuint vertexBufferObject;
 GLuint indexBufferObject;
+GLuint vao;
 
-GLuint vaoObject;
+GLuint theProgram;
+
+GLuint modelToCameraMatrixUnif;
+GLuint cameraToClipMatrixUnif;
+
+glm::mat4 cameraToClipMatrix(0.0f);
+
+glm::vec3 StationaryOffset(float fElapsedTime) {
+  return glm::vec3(0.0f, 0.0f, -20.0f);
+}
+
+glm::vec3 OvalOffset(float fElapsedTime) {
+  const float fLoopDuration = 3.0f;
+  const float fScale = 3.14159f * 2.0f / fLoopDuration;
+
+  float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
+
+  return glm::vec3(cosf(fCurrTimeThroughLoop * fScale) * 4.f,
+                   sinf(fCurrTimeThroughLoop * fScale) * 6.f,
+                   -20.0f);
+}
+
+glm::vec3 BottomCircleOffset(float fElapsedTime) {
+  const float fLoopDuration = 12.0f;
+  const float fScale = 3.14159f * 2.0f / fLoopDuration;
+
+  float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
+
+  return glm::vec3(cosf(fCurrTimeThroughLoop * fScale) * 5.f,
+                   -3.5f,
+                   sinf(fCurrTimeThroughLoop * fScale) * 5.f - 20.0f);
+}
+
+struct Instance {
+  typedef glm::vec3(*OffsetFunc)(float);
+
+  OffsetFunc CalcOffset;
+
+  glm::mat4 ConstructMatrix(float fElapsedTime) {
+    glm::mat4 theMat(1.0f);
+
+    theMat[3] = glm::vec4(CalcOffset(fElapsedTime), 1.0f);
+
+    return theMat;
+  }
+};
+
+Instance g_instanceList[] = {
+    {StationaryOffset},
+    {OvalOffset},
+    {BottomCircleOffset},
+};
+
+float CalcFrustumScale(float fFovDeg) {
+  const float degToRad = 3.14159f * 2.0f / 360.0f;
+  float fFovRad = fFovDeg * degToRad;
+  return 1.0f / tan(fFovRad / 2.0f);
+}
+
+const float fFrustumScale = CalcFrustumScale(45.0f);
 
 void InitializeProgram() {
   std::vector<GLuint> shaderList;
@@ -159,22 +123,20 @@ void InitializeProgram() {
 
   theProgram = utils::createProgram(shaderList);
 
-  offsetUniform = glGetUniformLocation(theProgram, "offset");
+  modelToCameraMatrixUnif = glGetUniformLocation(theProgram, "modelToCameraMatrix");
+  cameraToClipMatrixUnif = glGetUniformLocation(theProgram, "cameraToClipMatrix");
 
-  perspectiveMatrixUnif = glGetUniformLocation(theProgram, "perspectiveMatrix");
+  float fzNear = 1.0f;
+  float fzFar = 45.0f;
 
-  float zNear = 0.5f;
-  float zFar = 3.0f;
-  memset(perspectiveMatrix, 0, sizeof(float) * 16);
-
-  perspectiveMatrix[0] = fFrustumScale;
-  perspectiveMatrix[5] = fFrustumScale;
-  perspectiveMatrix[10] = (zFar + zNear) / (zNear - zFar);
-  perspectiveMatrix[14] = (2 * zFar * zNear) / (zNear - zFar);
-  perspectiveMatrix[11] = -1.0f;
+  cameraToClipMatrix[0].x = fFrustumScale;
+  cameraToClipMatrix[1].y = fFrustumScale;
+  cameraToClipMatrix[2].z = (fzFar + fzNear) / (fzNear - fzFar);
+  cameraToClipMatrix[2].w = -1.0f;
+  cameraToClipMatrix[3].z = (2 * fzFar * fzNear) / (fzNear - fzFar);
 
   glUseProgram(theProgram);
-  glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
+  glUniformMatrix4fv(cameraToClipMatrixUnif, 1, GL_FALSE, glm::value_ptr(cameraToClipMatrix));
   glUseProgram(0);
 }
 
@@ -192,12 +154,14 @@ void InitializeVertexBuffer() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void InitializeVertexArrayObjects() {
-  glGenVertexArrays(1, &vaoObject);
-  glBindVertexArray(vaoObject);
+void init() {
+  InitializeProgram();
+  InitializeVertexBuffer();
+
+  glGenVertexArrays(1, &vao);
+  glBindVertexArray(vao);
 
   size_t colorDataOffset = sizeof(float) * 3 * numberOfVertices;
-
   glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
@@ -206,12 +170,6 @@ void InitializeVertexArrayObjects() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
 
   glBindVertexArray(0);
-}
-
-void init() {
-  InitializeProgram();
-  InitializeVertexBuffer();
-  InitializeVertexArrayObjects();
 
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -221,7 +179,6 @@ void init() {
   glDepthMask(GL_TRUE);
   glDepthFunc(GL_LEQUAL);
   glDepthRange(0.0f, 1.0f);
-  glEnable(GL_DEPTH_CLAMP);
 }
 
 void display() {
@@ -231,29 +188,30 @@ void display() {
 
   glUseProgram(theProgram);
 
-  glBindVertexArray(vaoObject);
+  glBindVertexArray(vao);
 
-  int count1 = 18, count2 = 18;
+  float fElapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
+  for (int iLoop = 0; iLoop < ARRAY_COUNT(g_instanceList); iLoop++) {
+    Instance &currInst = g_instanceList[iLoop];
+    const glm::mat4 &transformMatrix = currInst.ConstructMatrix(fElapsedTime);
 
-  glUniform3f(offsetUniform, 0.0f, 0.0f, 0.9f);
-  glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
-
-  glUniform3f(offsetUniform, 0.0f, 0.0f, 0.5f);
-  glDrawElementsBaseVertex(GL_TRIANGLES, ARRAY_COUNT(indexData),
-                           GL_UNSIGNED_SHORT, 0, numberOfVertices / 2);
+    glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(transformMatrix));
+    glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+  }
 
   glBindVertexArray(0);
   glUseProgram(0);
 
   glutSwapBuffers();
+  glutPostRedisplay();
 }
 
 void reshape(int w, int h) {
-  perspectiveMatrix[0] = fFrustumScale * (h / (float) w);
-  perspectiveMatrix[5] = fFrustumScale;
+  cameraToClipMatrix[0].x = fFrustumScale * (h / (float) w);
+  cameraToClipMatrix[1].y = fFrustumScale;
 
   glUseProgram(theProgram);
-  glUniformMatrix4fv(perspectiveMatrixUnif, 1, GL_FALSE, perspectiveMatrix);
+  glUniformMatrix4fv(cameraToClipMatrixUnif, 1, GL_FALSE, glm::value_ptr(cameraToClipMatrix));
   glUseProgram(0);
 
   glViewport(0, 0, (GLsizei) w, (GLsizei) h);

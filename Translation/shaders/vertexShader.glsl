@@ -1,16 +1,16 @@
 #version 330
-layout (location = 0) in vec4 position;
-layout (location = 1) in vec4 color;
+
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec4 color;
 
 smooth out vec4 theColor;
 
-uniform vec3 offset;
-uniform mat4 perspectiveMatrix;
+uniform mat4 cameraToClipMatrix;
+uniform mat4 modelToCameraMatrix;
 
 void main()
 {
-    float angle = 20;
-    vec4 cameraPos = position + vec4(offset.x, offset.y, offset.z, 0.0f);
-    gl_Position = perspectiveMatrix * cameraPos;
-    theColor = color;
+   vec4 cameraPos = modelToCameraMatrix * position;
+   gl_Position = cameraToClipMatrix * cameraPos;
+   theColor = color;
 }

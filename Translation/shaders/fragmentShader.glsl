@@ -1,8 +1,8 @@
 #version 330
 
-out vec4 outputColor;
-
 smooth in vec4 theColor;
+
+out vec4 outputColor;
 
 void main()
 {
