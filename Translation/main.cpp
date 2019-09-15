@@ -1,164 +1,21 @@
+
 #include "utils.h"
+#include <string>
+#include <vector>
+#include <stack>
+#include <cmath>
+#include <cstdio>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-unsigned int defaults(unsigned int displayMode, int &width, int &height);
-void keyboard(unsigned char key, int x, int y);
-void reshape(int w, int h);
-void display();
-void init();
-
-const int numberOfVertices = 8;
-
-#define GREEN_COLOR 0.0f, 1.0f, 0.0f, 1.0f
-#define BLUE_COLOR    0.0f, 0.0f, 1.0f, 1.0f
-#define RED_COLOR 1.0f, 0.0f, 0.0f, 1.0f
-#define GREY_COLOR 0.8f, 0.8f, 0.8f, 1.0f
-#define BROWN_COLOR 0.5f, 0.5f, 0.0f, 1.0f
-
-const float vertexData[] = {
-    +1.0f, +1.0f, +1.0f,
-    -1.0f, -1.0f, +1.0f,
-    -1.0f, +1.0f, -1.0f,
-    +1.0f, -1.0f, -1.0f,
-
-    -1.0f, -1.0f, -1.0f,
-    +1.0f, +1.0f, -1.0f,
-    +1.0f, -1.0f, +1.0f,
-    -1.0f, +1.0f, +1.0f,
-
-    GREEN_COLOR,
-    BLUE_COLOR,
-    RED_COLOR,
-    BROWN_COLOR,
-
-    GREEN_COLOR,
-    BLUE_COLOR,
-    RED_COLOR,
-    BROWN_COLOR,
-};
-
-const GLshort indexData[] = {
-    0, 1, 2,
-    1, 0, 3,
-    2, 3, 0,
-    3, 2, 1,
-
-    5, 4, 6,
-    4, 5, 7,
-    7, 6, 4,
-    6, 7, 5,
-};
-
-GLuint vertexBufferObject;
-GLuint indexBufferObject;
-GLuint vao;
-
 GLuint theProgram;
+GLuint positionAttrib;
+GLuint colorAttrib;
 
 GLuint modelToCameraMatrixUnif;
 GLuint cameraToClipMatrixUnif;
 
 glm::mat4 cameraToClipMatrix(0.0f);
-
-glm::mat3 NullRotation(float fElapsedTime)
-{
-  return glm::mat3(1.0f);
-}
-
-float ComputeAngleRad(float fElapsedTime, float fLoopDuration)
-{
-  const float fScale = 3.14159f * 2.0f / fLoopDuration;
-  float fCurrTimeThroughLoop = fmodf(fElapsedTime, fLoopDuration);
-  return fCurrTimeThroughLoop * fScale;
-}
-
-glm::mat3 RotateX(float fElapsedTime)
-{
-  float fAngRad = ComputeAngleRad(fElapsedTime, 3.0);
-  float fCos = cosf(fAngRad);
-  float fSin = sinf(fAngRad);
-
-  glm::mat3 theMat(1.0f);
-  theMat[1].y = fCos; theMat[2].y = -fSin;
-  theMat[1].z = fSin; theMat[2].z = fCos;
-  return theMat;
-}
-
-glm::mat3 RotateY(float fElapsedTime)
-{
-  float fAngRad = ComputeAngleRad(fElapsedTime, 2.0);
-  float fCos = cosf(fAngRad);
-  float fSin = sinf(fAngRad);
-
-  glm::mat3 theMat(1.0f);
-  theMat[0].x = fCos; theMat[2].x = fSin;
-  theMat[0].z = -fSin; theMat[2].z = fCos;
-  return theMat;
-}
-
-glm::mat3 RotateZ(float fElapsedTime)
-{
-  float fAngRad = ComputeAngleRad(fElapsedTime, 2.0);
-  float fCos = cosf(fAngRad);
-  float fSin = sinf(fAngRad);
-
-  glm::mat3 theMat(1.0f);
-  theMat[0].x = fCos; theMat[1].x = -fSin;
-  theMat[0].y = fSin; theMat[1].y = fCos;
-  return theMat;
-}
-
-glm::mat3 RotateAxis(float fElapsedTime)
-{
-  float fAngRad = ComputeAngleRad(fElapsedTime, 2.0);
-  float fCos = cosf(fAngRad);
-  float fInvCos = 1.0f - fCos;
-  float fSin = sinf(fAngRad);
-  float fInvSin = 1.0f - fSin;
-
-  glm::vec3 axis(1.0f, 1.0f, 1.0f);
-  axis = glm::normalize(axis);
-
-  glm::mat3 theMat(1.0f);
-  theMat[0].x = (axis.x * axis.x) + ((1 - axis.x * axis.x) * fCos);
-  theMat[1].x = axis.x * axis.y * (fInvCos) - (axis.z * fSin);
-  theMat[2].x = axis.x * axis.z * (fInvCos) + (axis.y * fSin);
-
-  theMat[0].y = axis.x * axis.y * (fInvCos) + (axis.z * fSin);
-  theMat[1].y = (axis.y * axis.y) + ((1 - axis.y * axis.y) * fCos);
-  theMat[2].y = axis.y * axis.z * (fInvCos) - (axis.x * fSin);
-
-  theMat[0].z = axis.x * axis.z * (fInvCos) - (axis.y * fSin);
-  theMat[1].z = axis.y * axis.z * (fInvCos) + (axis.x * fSin);
-  theMat[2].z = (axis.z * axis.z) + ((1 - axis.z * axis.z) * fCos);
-  return theMat;
-}
-
-struct Instance
-{
-  typedef glm::mat3(*RotationFunc)(float);
-
-  RotationFunc CalcRotation;
-  glm::vec3 offset;
-
-  glm::mat4 ConstructMatrix(float fElapsedTime)
-  {
-    const glm::mat3 &rotMatrix = CalcRotation(fElapsedTime);
-    glm::mat4 theMat(rotMatrix);
-    theMat[3] = glm::vec4(offset, 1.0f);
-
-    return theMat;
-  }
-};
-
-Instance g_instanceList[] = {
-    {NullRotation, glm::vec3(0.0f, 0.0f, -25.0f)},
-    {RotateX, glm::vec3(-5.0f, -5.0f, -25.0f)},
-    {RotateY, glm::vec3(-5.0f, 5.0f, -25.0f)},
-    {RotateZ, glm::vec3(5.0f, 5.0f, -25.0f)},
-    {RotateAxis, glm::vec3(5.0f, -5.0f, -25.0f)},
-};
 
 float CalcFrustumScale(float fFovDeg) {
   const float degToRad = 3.14159f * 2.0f / 360.0f;
@@ -176,11 +33,14 @@ void InitializeProgram() {
 
   theProgram = utils::createProgram(shaderList);
 
+  positionAttrib = glGetAttribLocation(theProgram, "position");
+  colorAttrib = glGetAttribLocation(theProgram, "color");
+
   modelToCameraMatrixUnif = glGetUniformLocation(theProgram, "modelToCameraMatrix");
   cameraToClipMatrixUnif = glGetUniformLocation(theProgram, "cameraToClipMatrix");
 
   float fzNear = 1.0f;
-  float fzFar = 45.0f;
+  float fzFar = 100.0f;
 
   cameraToClipMatrix[0].x = fFrustumScale;
   cameraToClipMatrix[1].y = fFrustumScale;
@@ -193,7 +53,109 @@ void InitializeProgram() {
   glUseProgram(0);
 }
 
-void InitializeVertexBuffer() {
+const int numberOfVertices = 24;
+
+#define RED_COLOR 1.0f, 0.0f, 0.0f, 1.0f
+#define GREEN_COLOR 0.0f, 1.0f, 0.0f, 1.0f
+#define BLUE_COLOR    0.0f, 0.0f, 1.0f, 1.0f
+
+#define YELLOW_COLOR 1.0f, 1.0f, 0.0f, 1.0f
+#define CYAN_COLOR 0.0f, 1.0f, 1.0f, 1.0f
+#define MAGENTA_COLOR    1.0f, 0.0f, 1.0f, 1.0f
+
+const float vertexData[] = {
+    //Front
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, -1.0f, +1.0f,
+    -1.0f, -1.0f, +1.0f,
+    -1.0f, +1.0f, +1.0f,
+
+    //Top
+    +1.0f, +1.0f, +1.0f,
+    -1.0f, +1.0f, +1.0f,
+    -1.0f, +1.0f, -1.0f,
+    +1.0f, +1.0f, -1.0f,
+
+    //Left
+    +1.0f, +1.0f, +1.0f,
+    +1.0f, +1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
+    +1.0f, -1.0f, +1.0f,
+
+    //Back
+    +1.0f, +1.0f, -1.0f,
+    -1.0f, +1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    +1.0f, -1.0f, -1.0f,
+
+    //Bottom
+    +1.0f, -1.0f, +1.0f,
+    +1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, -1.0f, +1.0f,
+
+    //Right
+    -1.0f, +1.0f, +1.0f,
+    -1.0f, -1.0f, +1.0f,
+    -1.0f, -1.0f, -1.0f,
+    -1.0f, +1.0f, -1.0f,
+
+    GREEN_COLOR,
+    GREEN_COLOR,
+    GREEN_COLOR,
+    GREEN_COLOR,
+
+    BLUE_COLOR,
+    BLUE_COLOR,
+    BLUE_COLOR,
+    BLUE_COLOR,
+
+    RED_COLOR,
+    RED_COLOR,
+    RED_COLOR,
+    RED_COLOR,
+
+    YELLOW_COLOR,
+    YELLOW_COLOR,
+    YELLOW_COLOR,
+    YELLOW_COLOR,
+
+    CYAN_COLOR,
+    CYAN_COLOR,
+    CYAN_COLOR,
+    CYAN_COLOR,
+
+    MAGENTA_COLOR,
+    MAGENTA_COLOR,
+    MAGENTA_COLOR,
+    MAGENTA_COLOR,
+};
+
+const GLshort indexData[] = {
+    0, 1, 2,
+    2, 3, 0,
+
+    4, 5, 6,
+    6, 7, 4,
+
+    8, 9, 10,
+    10, 11, 8,
+
+    12, 13, 14,
+    14, 15, 12,
+
+    16, 17, 18,
+    18, 19, 16,
+
+    20, 21, 22,
+    22, 23, 20,
+};
+
+GLuint vertexBufferObject;
+GLuint indexBufferObject;
+GLuint vao;
+
+void InitializeVAO() {
   glGenBuffers(1, &vertexBufferObject);
 
   glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
@@ -205,24 +167,364 @@ void InitializeVertexBuffer() {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexData), indexData, GL_STATIC_DRAW);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-}
-
-void init() {
-  InitializeProgram();
-  InitializeVertexBuffer();
 
   glGenVertexArrays(1, &vao);
   glBindVertexArray(vao);
 
   size_t colorDataOffset = sizeof(float) * 3 * numberOfVertices;
   glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) colorDataOffset);
+  glEnableVertexAttribArray(positionAttrib);
+  glEnableVertexAttribArray(colorAttrib);
+  glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
+  glVertexAttribPointer(colorAttrib, 4, GL_FLOAT, GL_FALSE, 0, (void *) colorDataOffset);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBufferObject);
 
   glBindVertexArray(0);
+}
+
+inline float DegToRad(float fAngDeg) {
+  const float fDegToRad = 3.14159f * 2.0f / 360.0f;
+  return fAngDeg * fDegToRad;
+}
+
+inline float Clamp(float fValue, float fMinValue, float fMaxValue) {
+  if (fValue < fMinValue)
+    return fMinValue;
+
+  if (fValue > fMaxValue)
+    return fMaxValue;
+
+  return fValue;
+}
+
+glm::mat3 RotateX(float fAngDeg) {
+  float fAngRad = DegToRad(fAngDeg);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
+
+  glm::mat3 theMat(1.0f);
+  theMat[1].y = fCos;
+  theMat[2].y = -fSin;
+  theMat[1].z = fSin;
+  theMat[2].z = fCos;
+  return theMat;
+}
+
+glm::mat3 RotateY(float fAngDeg) {
+  float fAngRad = DegToRad(fAngDeg);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
+
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = fCos;
+  theMat[2].x = fSin;
+  theMat[0].z = -fSin;
+  theMat[2].z = fCos;
+  return theMat;
+}
+
+glm::mat3 RotateZ(float fAngDeg) {
+  float fAngRad = DegToRad(fAngDeg);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
+
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = fCos;
+  theMat[1].x = -fSin;
+  theMat[0].y = fSin;
+  theMat[1].y = fCos;
+  return theMat;
+}
+
+class MatrixStack {
+public:
+  MatrixStack()
+      : m_currMat(1.0f) {
+  }
+
+  const glm::mat4 &Top() {
+    return m_currMat;
+  }
+
+  void RotateX(float fAngDeg) {
+    m_currMat = m_currMat * glm::mat4(::RotateX(fAngDeg));
+  }
+
+  void RotateY(float fAngDeg) {
+    m_currMat = m_currMat * glm::mat4(::RotateY(fAngDeg));
+  }
+
+  void RotateZ(float fAngDeg) {
+    m_currMat = m_currMat * glm::mat4(::RotateZ(fAngDeg));
+  }
+
+  void Scale(const glm::vec3 &scaleVec) {
+    glm::mat4 scaleMat(1.0f);
+    scaleMat[0].x = scaleVec.x;
+    scaleMat[1].y = scaleVec.y;
+    scaleMat[2].z = scaleVec.z;
+
+    m_currMat = m_currMat * scaleMat;
+  }
+
+  void Translate(const glm::vec3 &offsetVec) {
+    glm::mat4 translateMat(1.0f);
+    translateMat[3] = glm::vec4(offsetVec, 1.0f);
+
+    m_currMat = m_currMat * translateMat;
+  }
+
+  void Push() {
+    m_matrices.push(m_currMat);
+  }
+
+  void Pop() {
+    m_currMat = m_matrices.top();
+    m_matrices.pop();
+  }
+
+private:
+  glm::mat4 m_currMat;
+  std::stack<glm::mat4> m_matrices;
+};
+
+class Hierarchy {
+public:
+  Hierarchy()
+      : posBase(glm::vec3(3.0f, -5.0f, -40.0f)), angBase(-45.0f), posBaseLeft(glm::vec3(2.0f, 0.0f, 0.0f)),
+        posBaseRight(glm::vec3(-2.0f, 0.0f, 0.0f)), scaleBaseZ(3.0f), angUpperArm(-33.75f), sizeUpperArm(9.0f),
+        posLowerArm(glm::vec3(0.0f, 0.0f, 8.0f)), angLowerArm(146.25f), lenLowerArm(5.0f), widthLowerArm(1.5f),
+        posWrist(glm::vec3(0.0f, 0.0f, 5.0f)), angWristRoll(0.0f), angWristPitch(67.5f), lenWrist(2.0f),
+        widthWrist(2.0f), posLeftFinger(glm::vec3(1.0f, 0.0f, 1.0f)), posRightFinger(glm::vec3(-1.0f, 0.0f, 1.0f)),
+        angFingerOpen(180.0f), lenFinger(2.0f), widthFinger(0.5f), angLowerFinger(45.0f) {}
+
+  void Draw() {
+    MatrixStack modelToCameraStack;
+
+    glUseProgram(theProgram);
+    glBindVertexArray(vao);
+
+    modelToCameraStack.Translate(posBase);
+    modelToCameraStack.RotateY(angBase);
+
+    //Draw left base.
+    {
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(posBaseLeft);
+      modelToCameraStack.Scale(glm::vec3(1.0f, 1.0f, scaleBaseZ));
+      glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+      glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+      modelToCameraStack.Pop();
+    }
+
+    //Draw right base.
+    {
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(posBaseRight);
+      modelToCameraStack.Scale(glm::vec3(1.0f, 1.0f, scaleBaseZ));
+      glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+      glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+      modelToCameraStack.Pop();
+    }
+
+    //Draw main arm.
+    DrawUpperArm(modelToCameraStack);
+
+    glBindVertexArray(0);
+    glUseProgram(0);
+  }
+
+#define STANDARD_ANGLE_INCREMENT 11.25f
+#define SMALL_ANGLE_INCREMENT 9.0f
+
+  void AdjBase(bool bIncrement) {
+    angBase += bIncrement ? STANDARD_ANGLE_INCREMENT : -STANDARD_ANGLE_INCREMENT;
+    angBase = fmodf(angBase, 360.0f);
+  }
+
+  void AdjUpperArm(bool bIncrement) {
+    angUpperArm += bIncrement ? STANDARD_ANGLE_INCREMENT : -STANDARD_ANGLE_INCREMENT;
+    angUpperArm = Clamp(angUpperArm, -90.0f, 0.0f);
+  }
+
+  void AdjLowerArm(bool bIncrement) {
+    angLowerArm += bIncrement ? STANDARD_ANGLE_INCREMENT : -STANDARD_ANGLE_INCREMENT;
+    angLowerArm = Clamp(angLowerArm, 0.0f, 146.25f);
+  }
+
+  void AdjWristPitch(bool bIncrement) {
+    angWristPitch += bIncrement ? STANDARD_ANGLE_INCREMENT : -STANDARD_ANGLE_INCREMENT;
+    angWristPitch = Clamp(angWristPitch, 0.0f, 90.0f);
+  }
+
+  void AdjWristRoll(bool bIncrement) {
+    angWristRoll += bIncrement ? STANDARD_ANGLE_INCREMENT : -STANDARD_ANGLE_INCREMENT;
+    angWristRoll = fmodf(angWristRoll, 360.0f);
+  }
+
+  void AdjFingerOpen(bool bIncrement) {
+    angFingerOpen += bIncrement ? SMALL_ANGLE_INCREMENT : -SMALL_ANGLE_INCREMENT;
+    angFingerOpen = Clamp(angFingerOpen, 9.0f, 180.0f);
+  }
+
+  void WritePose() {
+    printf("angBase:\t%f\n", angBase);
+    printf("angUpperArm:\t%f\n", angUpperArm);
+    printf("angLowerArm:\t%f\n", angLowerArm);
+    printf("angWristPitch:\t%f\n", angWristPitch);
+    printf("angWristRoll:\t%f\n", angWristRoll);
+    printf("angFingerOpen:\t%f\n", angFingerOpen);
+    printf("\n");
+  }
+
+private:
+  void DrawFingers(MatrixStack &modelToCameraStack) {
+    //Draw left finger
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(posLeftFinger);
+    modelToCameraStack.RotateY(angFingerOpen);
+
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenFinger / 2.0f));
+    modelToCameraStack.Scale(glm::vec3(widthFinger / 2.0f, widthFinger / 2.0f, lenFinger / 2.0f));
+    glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+    glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+    modelToCameraStack.Pop();
+
+    {
+      //Draw left lower finger
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenFinger));
+      modelToCameraStack.RotateY(-angLowerFinger);
+
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenFinger / 2.0f));
+      modelToCameraStack.Scale(glm::vec3(widthFinger / 2.0f, widthFinger / 2.0f, lenFinger / 2.0f));
+      glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+      glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+      modelToCameraStack.Pop();
+
+      modelToCameraStack.Pop();
+    }
+
+    modelToCameraStack.Pop();
+
+    //Draw right finger
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(posRightFinger);
+    modelToCameraStack.RotateY(-angFingerOpen);
+
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenFinger / 2.0f));
+    modelToCameraStack.Scale(glm::vec3(widthFinger / 2.0f, widthFinger / 2.0f, lenFinger / 2.0f));
+    glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+    glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+    modelToCameraStack.Pop();
+
+    {
+      //Draw right lower finger
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenFinger));
+      modelToCameraStack.RotateY(angLowerFinger);
+
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenFinger / 2.0f));
+      modelToCameraStack.Scale(glm::vec3(widthFinger / 2.0f, widthFinger / 2.0f, lenFinger / 2.0f));
+      glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+      glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+      modelToCameraStack.Pop();
+
+      modelToCameraStack.Pop();
+    }
+
+    modelToCameraStack.Pop();
+  }
+
+  void DrawWrist(MatrixStack &modelToCameraStack) {
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(posWrist);
+    modelToCameraStack.RotateZ(angWristRoll);
+    modelToCameraStack.RotateX(angWristPitch);
+
+    modelToCameraStack.Push();
+    modelToCameraStack.Scale(glm::vec3(widthWrist / 2.0f, widthWrist / 2.0f, lenWrist / 2.0f));
+    glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+    glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+    modelToCameraStack.Pop();
+
+    DrawFingers(modelToCameraStack);
+
+    modelToCameraStack.Pop();
+  }
+
+  void DrawLowerArm(MatrixStack &modelToCameraStack) {
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(posLowerArm);
+    modelToCameraStack.RotateX(angLowerArm);
+
+    modelToCameraStack.Push();
+    modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, lenLowerArm / 2.0f));
+    modelToCameraStack.Scale(glm::vec3(widthLowerArm / 2.0f, widthLowerArm / 2.0f, lenLowerArm / 2.0f));
+    glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+    glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+    modelToCameraStack.Pop();
+
+    DrawWrist(modelToCameraStack);
+
+    modelToCameraStack.Pop();
+  }
+
+  void DrawUpperArm(MatrixStack &modelToCameraStack) {
+    modelToCameraStack.Push();
+    modelToCameraStack.RotateX(angUpperArm);
+
+    {
+      modelToCameraStack.Push();
+      modelToCameraStack.Translate(glm::vec3(0.0f, 0.0f, (sizeUpperArm / 2.0f) - 1.0f));
+      modelToCameraStack.Scale(glm::vec3(1.0f, 1.0f, sizeUpperArm / 2.0f));
+      glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(modelToCameraStack.Top()));
+      glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
+      modelToCameraStack.Pop();
+    }
+
+    DrawLowerArm(modelToCameraStack);
+
+    modelToCameraStack.Pop();
+  }
+
+  glm::vec3 posBase;
+  float angBase;
+
+  glm::vec3 posBaseLeft, posBaseRight;
+  float scaleBaseZ;
+
+  float angUpperArm;
+  float sizeUpperArm;
+
+  glm::vec3 posLowerArm;
+  float angLowerArm;
+  float lenLowerArm;
+  float widthLowerArm;
+
+  glm::vec3 posWrist;
+  float angWristRoll;
+  float angWristPitch;
+  float lenWrist;
+  float widthWrist;
+
+  glm::vec3 posLeftFinger, posRightFinger;
+  float angFingerOpen;
+  float lenFinger;
+  float widthFinger;
+  float angLowerFinger;
+};
+
+Hierarchy g_armature;
+
+//Called after the window and OpenGL are initialized. Called exactly once, before the main loop.
+void init() {
+  InitializeProgram();
+  InitializeVAO();
 
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -234,31 +536,22 @@ void init() {
   glDepthRange(0.0f, 1.0f);
 }
 
+//Called to update the display.
+//You should call glutSwapBuffers after all of your rendering to display what you rendered.
+//If you need continuous updates of the screen, call glutPostRedisplay() at the end of the function.
 void display() {
   glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClearDepth(1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glUseProgram(theProgram);
-
-  glBindVertexArray(vao);
-
-  float fElapsedTime = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
-  for (int iLoop = 0; iLoop < ARRAY_COUNT(g_instanceList); iLoop++) {
-    Instance &currInst = g_instanceList[iLoop];
-    const glm::mat4 &transformMatrix = currInst.ConstructMatrix(fElapsedTime);
-
-    glUniformMatrix4fv(modelToCameraMatrixUnif, 1, GL_FALSE, glm::value_ptr(transformMatrix));
-    glDrawElements(GL_TRIANGLES, ARRAY_COUNT(indexData), GL_UNSIGNED_SHORT, 0);
-  }
-
-  glBindVertexArray(0);
-  glUseProgram(0);
+  g_armature.Draw();
 
   glutSwapBuffers();
   glutPostRedisplay();
 }
 
+//Called whenever the window is resized. The new window size is given, in pixels.
+//This is an opportunity to call glViewport or glScissor to keep up with the change in size.
 void reshape(int w, int h) {
   cameraToClipMatrix[0].x = fFrustumScale * (h / (float) w);
   cameraToClipMatrix[1].y = fFrustumScale;
@@ -270,10 +563,40 @@ void reshape(int w, int h) {
   glViewport(0, 0, (GLsizei) w, (GLsizei) h);
 }
 
+//Called whenever a key on the keyboard was pressed.
+//The key is given by the ''key'' parameter, which is in ASCII.
+//It's often a good idea to have the escape key (ASCII value 27) call glutLeaveMainLoop() to
+//exit the program.
 void keyboard(unsigned char key, int x, int y) {
   switch (key) {
   case 27:glutLeaveMainLoop();
     return;
+  case 'a': g_armature.AdjBase(true);
+    break;
+  case 'd': g_armature.AdjBase(false);
+    break;
+  case 'w': g_armature.AdjUpperArm(false);
+    break;
+  case 's': g_armature.AdjUpperArm(true);
+    break;
+  case 'r': g_armature.AdjLowerArm(false);
+    break;
+  case 'f': g_armature.AdjLowerArm(true);
+    break;
+  case 't': g_armature.AdjWristPitch(false);
+    break;
+  case 'g': g_armature.AdjWristPitch(true);
+    break;
+  case 'z': g_armature.AdjWristRoll(true);
+    break;
+  case 'c': g_armature.AdjWristRoll(false);
+    break;
+  case 'q': g_armature.AdjFingerOpen(true);
+    break;
+  case 'e': g_armature.AdjFingerOpen(false);
+    break;
+  case 32: g_armature.WritePose();
+    break;
   }
 }
 
