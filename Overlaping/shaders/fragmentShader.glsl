@@ -6,5 +6,5 @@ smooth in vec4 theColor;
 
 void main()
 {
-   outputColor = theColor;
+    outputColor = theColor;
 }

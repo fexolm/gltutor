@@ -22,7 +22,6 @@ void utils::initGlut(int *argc,
   int window = glutCreateWindow(argv[0]);
 
   glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-
   GLenum err = glewInit();
   if (GLEW_OK != err) {
     fprintf(stderr, "Error: %s\n", glewGetErrorString(err));

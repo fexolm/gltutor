@@ -10,12 +10,12 @@ void display();
 void init();
 
 const std::vector<float> vertexPositions = {
-    0.0f,    0.5f, 0.0f, 1.0f,
+    0.0f, 0.5f, 0.0f, 1.0f,
     0.5f, -0.366f, 0.0f, 1.0f,
     -0.5f, -0.366f, 0.0f, 1.0f,
-    1.0f,    0.0f, 0.0f, 1.0f,
-    0.0f,    1.0f, 0.0f, 1.0f,
-    0.0f,    0.0f, 1.0f, 1.0f,
+    1.0f, 0.0f, 0.0f, 1.0f,
+    0.0f, 1.0f, 0.0f, 1.0f,
+    0.0f, 0.0f, 1.0f, 1.0f,
 };
 
 GLuint theProgram;
@@ -41,7 +41,6 @@ void InitializeProgram() {
   glUniform1f(fragLoopDuration, 10.0f);
   glUseProgram(0);
 }
-
 
 void InitializeVertexBuffer() {
   glGenBuffers(1, &positionBufferObject);
@@ -75,7 +74,7 @@ void display() {
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void*)48);
+  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (void *) 48);
 
   glDrawArrays(GL_TRIANGLES, 0, 3);
 
