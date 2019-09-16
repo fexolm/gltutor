@@ -109,4 +109,53 @@ GLuint utils::loadShader(GLenum eShaderType, const std::string &strShaderFilenam
 
   return shader;
 }
+glm::mat3 utils::RotateY(float fAngDeg) {
+  float fAngRad = DegToRad(fAngDeg);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
+
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = fCos;
+  theMat[2].x = fSin;
+  theMat[0].z = -fSin;
+  theMat[2].z = fCos;
+  return theMat;
+}
+glm::mat3 utils::RotateZ(float fAngDeg) {
+  float fAngRad = DegToRad(fAngDeg);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
+
+  glm::mat3 theMat(1.0f);
+  theMat[0].x = fCos;
+  theMat[1].x = -fSin;
+  theMat[0].y = fSin;
+  theMat[1].y = fCos;
+  return theMat;
+}
+glm::mat3 utils::RotateX(float fAngDeg) {
+  float fAngRad = DegToRad(fAngDeg);
+  float fCos = cosf(fAngRad);
+  float fSin = sinf(fAngRad);
+
+  glm::mat3 theMat(1.0f);
+  theMat[1].y = fCos;
+  theMat[2].y = -fSin;
+  theMat[1].z = fSin;
+  theMat[2].z = fCos;
+  return theMat;
+}
+float utils::Clamp(float fValue, float fMinValue, float fMaxValue) {
+  if (fValue < fMinValue)
+    return fMinValue;
+
+  if (fValue > fMaxValue)
+    return fMaxValue;
+
+  return fValue;
+}
+float utils::DegToRad(float fAngDeg) {
+  const float fDegToRad = 3.14159f * 2.0f / 360.0f;
+  return fAngDeg * fDegToRad;
+}
 
